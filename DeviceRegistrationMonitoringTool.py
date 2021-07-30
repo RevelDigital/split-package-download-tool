@@ -13,8 +13,8 @@ from colorama import init
 init()
 
 newDevicePollingInterval = 30
-dummy_device_reg_key = ""
 api_key = ""
+dummy_device_reg_key = ""
 
 query = {'api_key':api_key, 'include_snap':False}
 original_devicesJSON = {}
@@ -27,7 +27,6 @@ def loadingAnimation():
         sys.stdout.flush()
         time.sleep(0.1)
 
-
 def getMediaPackage():
     package = requests.get("https://svc1.reveldigital.com/v2/package/get/" + dummy_device_reg_key + "?tar=true", stream=True)
     if package.status_code == requests.codes.ok:
@@ -35,7 +34,10 @@ def getMediaPackage():
             f.write(package.raw.read())
     else :
         done = True
-        print("Bad response code recevied. Trying again in 1 minute")
+        print("Bad response code recevied")
+        print("Response code: " + str(package.status_code))
+        print("Response body:" + package.content)
+        print("Trying again in 1 minute")
         time.sleep(60)
         print("Step 1 of 3: Downloading media package for dummy device...")
         done = False
@@ -50,7 +52,8 @@ t.start()
 getMediaPackage()
 done = True
 
-print("        Media package download complete")
+print("")
+print("             Media package download complete")
 print("")
 print("Step 2 of 3: Creating Media.tar file")
 with tarfile.open("MediaPackage.tar") as tar:
@@ -68,12 +71,12 @@ for root, dirs, files in os.walk(media_path):
     for file in files:
         media_tar_handle.add(os.path.join(root, file))
 media_tar_handle.close()
-print("        Media.tar file created")
+print("             Media.tar file created")
 print("")
 
 # remove files unneeded files/directories
 if os.path.exists("MediaPackage.tar"):
-  os.remove("MediaPackage.tar")
+    os.remove("MediaPackage.tar")
 if os.path.isdir('Media'):
     shutil.rmtree('./Media')
 
@@ -82,13 +85,13 @@ if path.exists("DeviceList.txt"):
     print("Step 3 of 3: Local device list found. Loading devices from list")
     with open('DeviceList.txt') as json_file:
         original_devicesJSON = json.load(json_file)
-    print("        Device list loaded")
+    print("             Device list loaded")
     print("")
     print("Checking in " + str(newDevicePollingInterval) + " seconds for new devices registered since script was last closed")
     print("")
 else:
     print("Step 3 of 3: Local device list doesn't exist. Generating list device list now...")
-    print("Device list created")
+    print("             Device list created")
     print("")
     original_devices = requests.get("https://api.reveldigital.com/api/devices", params=query)
     original_devicesJSON = original_devices.json()
@@ -97,6 +100,22 @@ else:
     print("Checking for new devices in " + str(newDevicePollingInterval) + " seconds")
     print("")
 
+def getPackageExcluingMedia(regKey):
+    response = requests.get("https://svc1.reveldigital.com/v2/package/get/" + regKey + "?tar=true&excludeMedia=true", stream=True)
+    if response.status_code == requests.codes.ok:
+        with open(regKey + ".tar", 'wb') as f:
+            f.write(package.raw.read())
+    else:
+        done = True
+        print("Bad response code")
+        print("Response code: " + str(response.status_code))
+        print("Response body:" + response.content)
+        print("Bad response code recevied. Trying again in 1 minute")
+        time.sleep(60)
+        done = False
+        t.start()
+        getPackageExcluingMedia(regKey)
+
 #Monitor for new device registrations and automatically download the device specific package.tar
 #get snapshot of all  devices for comparison
 while True:
@@ -104,33 +123,40 @@ while True:
     print("Checking for new devices now...")
     print("")
     devices = requests.get("https://api.reveldigital.com/api/devices", params=query)
-    devicesJSON = devices.json()
-    newDeviceCount = 0
-    with open('DeviceList.txt') as json_file:
-        original_devicesJSON = json.load(json_file)
-    for device in devicesJSON:
-        if(device["device_type"]["id"] == "Universal"):
-            matchFound = False
-            for originalDevice in original_devicesJSON:
-                if device["registration_key"] == originalDevice["registration_key"]:
-                    matchFound = True
-            if matchFound == False:
-                newDeviceCount += 1
-                print(Fore.GREEN + "New Device Found: " + device["name"] + ". Downloading package now...")
-                print(Style.RESET_ALL)
-                key = device["registration_key"]
-                done = False
-                t.start()
-                package = requests.get("https://svc1.reveldigital.com/v2/package/get/" + key + "?tar=true&excludeMedia=true", stream=True)
-                with open(key + ".tar", 'wb') as f:
-                    f.write(package.raw.read())
-                done = True
-                print("Download complete")
-                print("")
-    original_devicesJSON = devicesJSON
-    with open('DeviceList.txt', 'w') as outfile:
-        json.dump(original_devicesJSON, outfile)
-    print("Check complete. " + str(newDeviceCount)+ " new Device(s) found")
-    print("")
-    print("Checking again in " + str(newDevicePollingInterval) + " seconds")
-    print("")
+    if devices.status_code == requests.codes.ok:
+        devicesJSON = devices.json()
+        newDeviceCount = 0
+        with open('DeviceList.txt') as json_file:
+            original_devicesJSON = json.load(json_file)
+        for device in devicesJSON:
+            if(device["device_type"]["id"] == "Universal"):
+                matchFound = False
+                for originalDevice in original_devicesJSON:
+                    if device["registration_key"] == originalDevice["registration_key"]:
+                        matchFound = True
+                if matchFound == False:
+                    newDeviceCount += 1
+                    print(Fore.GREEN + "New Device Found: " + device["name"] + ". Downloading package now...")
+                    print(Style.RESET_ALL)
+                    key = device["registration_key"]
+                    done = False
+                    t.start()
+                    getPackageExcluingMedia(key)
+                    # package = requests.get("https://svc1.reveldigital.com/v2/package/get/" + key + "?tar=true&excludeMedia=true", stream=True)
+                    done = True
+                    print("Download complete")
+                    print("")
+        original_devicesJSON = devicesJSON
+        with open('DeviceList.txt', 'w') as outfile:
+            json.dump(original_devicesJSON, outfile)
+        print("Check complete. " + str(newDeviceCount)+ " new Device(s) found")
+        print("")
+        print("Checking again in " + str(newDevicePollingInterval) + " seconds")
+        print("")
+    else:
+        print("Bad response code")
+        print("Response code: " + str(devices.status_code))
+        print("Response body:" + devices.content)
+        print("Bad response code recevied. Trying again in 1 minute")
+        
+    
