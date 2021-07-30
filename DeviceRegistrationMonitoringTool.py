@@ -5,6 +5,12 @@ import os
 import time
 from os import path
 import shutil
+import itertools
+import threading
+import sys
+from colorama import Fore, Back, Style
+from colorama import init
+init()
 
 newDevicePollingInterval = 30
 dummy_device_reg_key = ""
@@ -13,14 +19,40 @@ api_key = ""
 query = {'api_key':api_key, 'include_snap':False}
 original_devicesJSON = {}
 
-print("Step 1: Downloading media package for dummy device...")
-package = requests.get("https://svc1.reveldigital.com/v2/package/get/" + dummy_device_reg_key + "?tar=true", stream=True)
-with open("MediaPackage.tar", 'wb') as f:
-    f.write(package.raw.read())
+def loadingAnimation():
+    for c in itertools.cycle(['|', '/', '-', '\\']):
+        if done:
+            break
+        sys.stdout.write('\rDownloading ' + c)
+        sys.stdout.flush()
+        time.sleep(0.1)
+
+
+def getMediaPackage():
+    package = requests.get("https://svc1.reveldigital.com/v2/package/get/" + dummy_device_reg_key + "?tar=true", stream=True)
+    if package.status_code == requests.codes.ok:
+        with open("MediaPackage.tar", 'wb') as f:
+            f.write(package.raw.read())
+    else :
+        done = True
+        print("Bad response code recevied. Trying again in 1 minute")
+        time.sleep(60)
+        print("Step 1 of 3: Downloading media package for dummy device...")
+        done = False
+        t.start()
+        getMediaPackage()
+
+print("Step 1 of 3: Downloading media package for dummy device...")
+done = False
+t = threading.Thread(target=loadingAnimation)
+t.daemon=True
+t.start()
+getMediaPackage()
+done = True
 
 print("        Media package download complete")
 print("")
-print("Step 2: Creating Media.tar file")
+print("Step 2 of 3: Creating Media.tar file")
 with tarfile.open("MediaPackage.tar") as tar:
     subdir_and_files = [
         tarinfo for tarinfo in tar.getmembers()
@@ -47,22 +79,22 @@ if os.path.isdir('Media'):
 
 # create or load data from local JSON device list
 if path.exists("DeviceList.txt"):
-    print("Step 3: Local device list found. Loading devices from list")
+    print("Step 3 of 3: Local device list found. Loading devices from list")
     with open('DeviceList.txt') as json_file:
         original_devicesJSON = json.load(json_file)
     print("        Device list loaded")
     print("")
-    print("Step 4: Checking in " + str(newDevicePollingInterval) + " seconds for new devices registered since script was last closed")
+    print("Checking in " + str(newDevicePollingInterval) + " seconds for new devices registered since script was last closed")
     print("")
 else:
-    print("Step 3: Local device list doesn't exist. Generating list device list now...")
+    print("Step 3 of 3: Local device list doesn't exist. Generating list device list now...")
     print("Device list created")
     print("")
     original_devices = requests.get("https://api.reveldigital.com/api/devices", params=query)
     original_devicesJSON = original_devices.json()
     with open('DeviceList.txt', 'w') as outfile:
         json.dump(original_devicesJSON, outfile)
-    print("Step 4: Checking for new devices in " + str(newDevicePollingInterval) + " seconds")
+    print("Checking for new devices in " + str(newDevicePollingInterval) + " seconds")
     print("")
 
 #Monitor for new device registrations and automatically download the device specific package.tar
@@ -84,11 +116,15 @@ while True:
                     matchFound = True
             if matchFound == False:
                 newDeviceCount += 1
-                print("New Device Found: " + device["name"] + ". Downloading package now...")
+                print(Fore.GREEN + "New Device Found: " + device["name"] + ". Downloading package now...")
+                print(Style.RESET_ALL)
                 key = device["registration_key"]
+                done = False
+                t.start()
                 package = requests.get("https://svc1.reveldigital.com/v2/package/get/" + key + "?tar=true&excludeMedia=true", stream=True)
                 with open(key + ".tar", 'wb') as f:
                     f.write(package.raw.read())
+                done = True
                 print("Download complete")
                 print("")
     original_devicesJSON = devicesJSON
