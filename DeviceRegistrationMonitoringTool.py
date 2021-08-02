@@ -98,12 +98,12 @@ def apiRequest(url, streamType, run_download_animation):
     enable_loading_animation = False
 
 # Getting media package from dummy device 
-print("Step 1 of 3: Downloading media package for dummy device...")
+print("Step 1 of 3: Downloading shared media...")
 apiRequest("https://svc1.reveldigital.com/v2/package/get/" + dummy_device_reg_key + "?tar=true", True, True)
 with open("MediaPackage.tar", 'wb') as f:
     f.write(response.raw.read())
 response.close()
-sys.stdout.write('\r             Media package download complete')
+sys.stdout.write('\r             Media download complete')
 print("")
 print("")
 

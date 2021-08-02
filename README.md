@@ -13,7 +13,7 @@ pip install colorama
 
 Note: Place the Python script file 'DeviceRegistrationMonitoringTool.py' within an empty folder before running it. All files will be added to that directory. 
 
-## Useage
+## Usage
 Before running the script, open it in some text editor and include the API key for your Revel Digital account. Insert API key within the set of double quotes following the api_key variable near the top of the script. You can find your [API key](https://as1.reveldigital.com/account/api) by clicking the user icon in the top right corner of the CMS portal. Navigate to 'Account Information' > 'Developer API', and choose GENERATE NEW API KEY
 
 The registration key of the dummy device must be included as well. Use dummy_device_reg_key to store the key as listed below
