@@ -12,7 +12,7 @@ from colorama import Fore, Back, Style, init
 init()
 
 api_key = ""
-dummy_device_reg_key = ""
+media_reference_device_reg_key = ""
 polling_interval = 60
 retry_interval = 30
 original_devicesJSON = {}
@@ -22,7 +22,9 @@ def loadingAnimation():
         if enable_loading_animation:
             sys.stdout.write('\rDownloading ' + c)
             sys.stdout.flush()
-            time.sleep(0.1)            
+            time.sleep(0.1)
+        else:
+            time.sleep(1)
 
 enable_loading_animation = False
 t = threading.Thread(target=loadingAnimation)
@@ -95,14 +97,16 @@ def apiRequest(url, streamType, run_download_animation):
                 print("Retrying now")
                 if run_download_animation:
                     enable_loading_animation = True
-    enable_loading_animation = False
 
-# Getting media package from dummy device 
+# Getting media package from shared media device 
 print("Step 1 of 3: Downloading shared media...")
-apiRequest("https://svc1.reveldigital.com/v2/package/get/" + dummy_device_reg_key + "?tar=true", True, True)
+apiRequest("https://svc1.reveldigital.com/v2/package/get/" + media_reference_device_reg_key + "?tar=true", True, True)
 with open("MediaPackage.tar", 'wb') as f:
-    f.write(response.raw.read())
+    for chunk in response.iter_content(chunk_size=1024 * 1024):
+        f.write(chunk)
+f.close()
 response.close()
+enable_loading_animation = False
 sys.stdout.write('\r             Media download complete')
 print("")
 print("")
@@ -110,13 +114,11 @@ print("")
 #Extracting Media folder from tar package
 print("Step 2 of 3: Creating Media.tar file")
 if path.exists("MediaPackage.tar"):
-    with tarfile.open("MediaPackage.tar") as tar:
-        subdir_and_files = [
-            tarinfo for tarinfo in tar.getmembers()
-                if tarinfo.name.startswith("Media/")
-        ]
-        tar.extractall(members=subdir_and_files)
-        tar.close()
+    tar = tarfile.open("MediaPackage.tar", 'r')
+    for entry in tar:
+        if entry.name.startswith("Media/"):
+            tar.extract(entry)
+    tar.close()
 else:    
     print(Fore.RED + "Something went wrong.")
     print("MediaPackage.tart not found")
@@ -125,11 +127,9 @@ else:
     sys.exit()
 
 # Creating Media.tar file
-media_tar_handle = tarfile.open('Media.tar', "a", format=tarfile.GNU_FORMAT)
-for root, dirs, files in os.walk('./Media'):
-    for file in files:
-        media_tar_handle.add(os.path.join(root, file))
-media_tar_handle.close()
+with tarfile.open('Media.tar', "a", format=tarfile.GNU_FORMAT) as archive:
+    archive.add('./Media')
+archive.close()
 print("             Media.tar file created")
 print("")
 
@@ -152,6 +152,7 @@ else:
     apiRequest("https://api.reveldigital.com/api/devices?api_key=" + api_key + "&include_snap=false", False, True)
     original_devicesJSON = response.json()
     response.close()
+    enable_loading_animation = False
     with open('DeviceList.txt', 'w') as outfile:
         json.dump(original_devicesJSON, outfile)
     print("")
@@ -185,6 +186,7 @@ while True:
                     with open(device["registration_key"] + ".tar", 'wb') as f:
                         f.write(response.raw.read())
                     response.close()
+                    enable_loading_animation = False
                     sys.stdout.write('\rDownload complete')
                     print("")
                     print("")
