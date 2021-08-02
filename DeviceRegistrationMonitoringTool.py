@@ -8,73 +8,132 @@ import shutil
 import itertools
 import threading
 import sys
-from colorama import Fore, Back, Style
-from colorama import init
+from colorama import Fore, Back, Style, init
 init()
 
-newDevicePollingInterval = 30
 api_key = ""
 dummy_device_reg_key = ""
-
-query = {'api_key':api_key, 'include_snap':False}
+polling_interval = 60
+retry_interval = 30
 original_devicesJSON = {}
 
 def loadingAnimation():
     for c in itertools.cycle(['|', '/', '-', '\\']):
-        if done:
-            break
-        sys.stdout.write('\rDownloading ' + c)
-        sys.stdout.flush()
-        time.sleep(0.1)
+        if enable_loading_animation:
+            sys.stdout.write('\rDownloading ' + c)
+            sys.stdout.flush()
+            time.sleep(0.1)            
 
-def getMediaPackage():
-    package = requests.get("https://svc1.reveldigital.com/v2/package/get/" + dummy_device_reg_key + "?tar=true", stream=True)
-    if package.status_code == requests.codes.ok:
-        with open("MediaPackage.tar", 'wb') as f:
-            f.write(package.raw.read())
-    else :
-        done = True
-        print("Bad response code recevied")
-        print("Response code: " + str(package.status_code))
-        print("Response body:" + package.content)
-        print("Trying again in 1 minute")
-        time.sleep(60)
-        print("Step 1 of 3: Downloading media package for dummy device...")
-        done = False
-        t.start()
-        getMediaPackage()
-
-print("Step 1 of 3: Downloading media package for dummy device...")
-done = False
+enable_loading_animation = False
 t = threading.Thread(target=loadingAnimation)
 t.daemon=True
 t.start()
-getMediaPackage()
-done = True
 
+def timerAnimation(duration):
+    while duration > -1:
+        sys.stdout.write('\r' + str(duration) + " seconds remaining ")
+        sys.stdout.flush()
+        time.sleep(1)
+        duration -= 1
+    print("")
+
+not_connected = True
+while not_connected:
+    try:
+        response = requests.get("https://api.reveldigital.com/api/status")
+    except requests.exceptions.RequestException as e:
+        print(Fore.RED + "Connection Error")
+        print("Error: " + str(e) + Fore.RESET)
+        print("Retrying in " + str(retry_interval) + " seconds")
+        timerAnimation(retry_interval)
+        print("")
+        print("Retrying now")
+    else:
+        if response.status_code == requests.codes.ok:
+            not_connected = False
+        else:
+            print(Fore.RED + "Bad response code recevied")
+            print("Response code: " + str(response.status_code))
+            print("Response body:" + str(response.content) + Fore.RESET)
+            print("Retrying in " + str(retry_interval) + " seconds")
+            timerAnimation(retry_interval)
+            print("")
+            print("Retrying now")
+
+def apiRequest(url, streamType, run_download_animation):
+    global response
+    global enable_loading_animation
+    requestIncomplete = True
+    if run_download_animation:
+        enable_loading_animation = True
+    while requestIncomplete:
+        try:
+            response = requests.get(url, stream=streamType)
+        except requests.exceptions.RequestException as e:
+            enable_loading_animation = False
+            sys.stdout.write('\r')
+            print(Fore.RED + "Connection Error")
+            print("Error: " + str(e) + Fore.RESET)
+            print("Retrying in " + str(retry_interval) + " seconds")
+            timerAnimation(retry_interval)
+            print("")
+            print("Retrying now")
+            if run_download_animation:
+                enable_loading_animation = True
+        else:
+            if response.status_code == requests.codes.ok:
+                requestIncomplete = False
+            else :
+                enable_loading_animation = False
+                sys.stdout.write('\r')
+                print(Fore.RED + "Bad response code recevied")
+                print("Response code: " + str(response.status_code))
+                print("Response body:" + str(response.content) + Fore.RESET)
+                print("Retrying in " + str(retry_interval) + " seconds")
+                timerAnimation(retry_interval)
+                print("")
+                print("Retrying now")
+                if run_download_animation:
+                    enable_loading_animation = True
+    enable_loading_animation = False
+
+# Getting media package from dummy device 
+print("Step 1 of 3: Downloading media package for dummy device...")
+apiRequest("https://svc1.reveldigital.com/v2/package/get/" + dummy_device_reg_key + "?tar=true", True, True)
+with open("MediaPackage.tar", 'wb') as f:
+    f.write(response.raw.read())
+response.close()
+sys.stdout.write('\r             Media package download complete')
 print("")
-print("             Media package download complete")
 print("")
+
+#Extracting Media folder from tar package
 print("Step 2 of 3: Creating Media.tar file")
-with tarfile.open("MediaPackage.tar") as tar:
-    subdir_and_files = [
-        tarinfo for tarinfo in tar.getmembers()
-            if tarinfo.name.startswith("Media/")
-    ]
-    tar.extractall(members=subdir_and_files)
-    tar.close()
-    
-# creates media tar archive for runtime media rehydration
-media_path = './Media'
+if path.exists("MediaPackage.tar"):
+    with tarfile.open("MediaPackage.tar") as tar:
+        subdir_and_files = [
+            tarinfo for tarinfo in tar.getmembers()
+                if tarinfo.name.startswith("Media/")
+        ]
+        tar.extractall(members=subdir_and_files)
+        tar.close()
+else:    
+    print(Fore.RED + "Something went wrong.")
+    print("MediaPackage.tart not found")
+    print("Close script and try again or contact support." + Fore.RESET)
+    close = input("Press enter to exit script")
+    sys.exit()
+
+# Creating Media.tar file
 media_tar_handle = tarfile.open('Media.tar', "a", format=tarfile.GNU_FORMAT)
-for root, dirs, files in os.walk(media_path):
+for root, dirs, files in os.walk('./Media'):
     for file in files:
         media_tar_handle.add(os.path.join(root, file))
 media_tar_handle.close()
 print("             Media.tar file created")
 print("")
 
-# remove files unneeded files/directories
+# remove unneeded files/directories
 if os.path.exists("MediaPackage.tar"):
     os.remove("MediaPackage.tar")
 if os.path.isdir('Media'):
@@ -87,45 +146,30 @@ if path.exists("DeviceList.txt"):
         original_devicesJSON = json.load(json_file)
     print("             Device list loaded")
     print("")
-    print("Checking in " + str(newDevicePollingInterval) + " seconds for new devices registered since script was last closed")
-    print("")
+    print("Checking in " + str(polling_interval) + " seconds for new devices registered since script was last closed")
 else:
     print("Step 3 of 3: Local device list doesn't exist. Generating list device list now...")
-    print("             Device list created")
-    print("")
-    original_devices = requests.get("https://api.reveldigital.com/api/devices", params=query)
-    original_devicesJSON = original_devices.json()
+    apiRequest("https://api.reveldigital.com/api/devices?api_key=" + api_key + "&include_snap=false", False, True)
+    original_devicesJSON = response.json()
+    response.close()
     with open('DeviceList.txt', 'w') as outfile:
         json.dump(original_devicesJSON, outfile)
-    print("Checking for new devices in " + str(newDevicePollingInterval) + " seconds")
     print("")
-
-def getPackageExcluingMedia(regKey):
-    response = requests.get("https://svc1.reveldigital.com/v2/package/get/" + regKey + "?tar=true&excludeMedia=true", stream=True)
-    if response.status_code == requests.codes.ok:
-        with open(regKey + ".tar", 'wb') as f:
-            f.write(package.raw.read())
-    else:
-        done = True
-        print("Bad response code")
-        print("Response code: " + str(response.status_code))
-        print("Response body:" + response.content)
-        print("Bad response code recevied. Trying again in 1 minute")
-        time.sleep(60)
-        done = False
-        t.start()
-        getPackageExcluingMedia(regKey)
+    sys.stdout.write('\r             Device list created')
+    print("")
+    print("")
+    print("Checking for new devices in " + str(polling_interval) + " seconds")
 
 #Monitor for new device registrations and automatically download the device specific package.tar
-#get snapshot of all  devices for comparison
 while True:
-    time.sleep(newDevicePollingInterval)
-    print("Checking for new devices now...")
+    timerAnimation(polling_interval)
     print("")
-    devices = requests.get("https://api.reveldigital.com/api/devices", params=query)
-    if devices.status_code == requests.codes.ok:
-        devicesJSON = devices.json()
-        newDeviceCount = 0
+    print("Checking for new devices now...")
+    apiRequest("https://api.reveldigital.com/api/devices?api_key=" + api_key + "&include_snap=false", False, False)
+    devicesJSON = response.json()
+    response.close()
+    newDeviceCount = 0
+    if path.exists("DeviceList.txt"):
         with open('DeviceList.txt') as json_file:
             original_devicesJSON = json.load(json_file)
         for device in devicesJSON:
@@ -136,27 +180,22 @@ while True:
                         matchFound = True
                 if matchFound == False:
                     newDeviceCount += 1
-                    print(Fore.GREEN + "New Device Found: " + device["name"] + ". Downloading package now...")
-                    print(Style.RESET_ALL)
-                    key = device["registration_key"]
-                    done = False
-                    t.start()
-                    getPackageExcluingMedia(key)
-                    # package = requests.get("https://svc1.reveldigital.com/v2/package/get/" + key + "?tar=true&excludeMedia=true", stream=True)
-                    done = True
-                    print("Download complete")
+                    print(Fore.GREEN + "New Device Found: " + device["name"] + ". Downloading package now..." + Fore.RESET)
+                    apiRequest("https://svc1.reveldigital.com/v2/package/get/" + device["registration_key"] + "?tar=true&excludeMedia=true", True, True)
+                    with open(device["registration_key"] + ".tar", 'wb') as f:
+                        f.write(response.raw.read())
+                    response.close()
+                    sys.stdout.write('\rDownload complete')
+                    print("")
                     print("")
         original_devicesJSON = devicesJSON
         with open('DeviceList.txt', 'w') as outfile:
             json.dump(original_devicesJSON, outfile)
         print("Check complete. " + str(newDeviceCount)+ " new Device(s) found")
-        print("")
-        print("Checking again in " + str(newDevicePollingInterval) + " seconds")
-        print("")
+        print("Checking again in " + str(polling_interval) + " seconds")
     else:
-        print("Bad response code")
-        print("Response code: " + str(devices.status_code))
-        print("Response body:" + devices.content)
-        print("Bad response code recevied. Trying again in 1 minute")
-        
-    
+        print(Fore.RED + "Something went wrong.")
+        print("DeviceList.txt not found")
+        print("Close script and try again or contact support." + Fore.RESET)
+        close = input("Press enter to exit script")
+        sys.exit()
