@@ -16,7 +16,7 @@ Note: Place the Python script file 'DeviceRegistrationMonitoringTool.py' within 
 ## Useage
 Before running the script, open it in some text editor and include the API key for your Revel Digital account. Insert API key within the set of double quotes following the api_key variable near the top of the script. You can find your [API key](https://as1.reveldigital.com/account/api) by clicking the user icon in the top right corner of the CMS portal. Navigate to 'Account Information' > 'Developer API', and choose GENERATE NEW API KEY
 
-Similarly, the registration key of the dummy device must be included as well. Use dummy_device_reg_key to store the key as listed below
+The registration key of the dummy device must be included as well. Use dummy_device_reg_key to store the key as listed below
 
 ```
 api_key = ""
@@ -25,8 +25,6 @@ dummy_device_reg_key = ""
 
 Save the changes and then run the script. This script includes animations. For best performance run the script using command prompt.
 
-Once the script is running it won't require any user input. Before closing the script make sure a download isn't in progress. Before copying copying a package to a USB drive, make sure that it's fully downloaded.
+Once the script is running it won't require any user input. Before closing the script, make sure a download isn't in progress. Before copying a package to a USB drive, confirm that it isn't still downloading.
 
-The script also generates a DeviceList.txt file which allows the script to detect new devices if they get registered when the script isn't running. For this functionality to work correctly, the file should not me removed or deleted. This functionality will only be available starting with the second time the script is ran.
-
-The script also downloads one device update package including media. When the download is complete, the script will provide the option of merging the one media download file with the all packages that were downloaded.
+The script also generates a DeviceList.txt file which allows the script to detect new devices if they get registered when the script isn't running. For this functionality to work correctly, the file should not me removed or deleted. This functionality will only be available starting with the second time the script runs.
