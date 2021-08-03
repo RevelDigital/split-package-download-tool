@@ -1,5 +1,5 @@
 # device-registration-monitoring-tool
-The script continuously monitors a Revel Digital account for new devices. When a new device is registered, the respectived tar package is downloaded, excluding the media content.
+The script continuously monitors a Revel Digital account for new devices. When a new device is registered, the respective tar package is downloaded, excluding the media content.
 
 ## Installation
 
