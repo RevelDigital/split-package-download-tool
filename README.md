@@ -1,4 +1,4 @@
-# new-device-split-package-download-tool
+# split-package-download-tool
 The script continuously monitors a Revel Digital account for new devices. When a new device is registered, the respective tar package is downloaded, excluding the media content.
 
 ## Installation
