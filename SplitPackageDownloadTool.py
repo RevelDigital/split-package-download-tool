@@ -1,14 +1,14 @@
-import requests
+import itertools
 import json
-import tarfile
 import os
-import time
 from os import path
 import shutil
-import itertools
-import threading
 import sys
+import tarfile
+import threading
+import time
 from colorama import Fore, Back, Style, init
+import requests
 init()
 
 api_key = ""
@@ -134,9 +134,9 @@ print("             Media.tar file created")
 print("")
 
 # remove unneeded files/directories
-if os.path.exists("MediaPackage.tar"):
+if path.exists("MediaPackage.tar"):
     os.remove("MediaPackage.tar")
-if os.path.isdir('Media'):
+if path.isdir('Media'):
     shutil.rmtree('./Media')
 
 # create or load data from local JSON device list
