@@ -85,7 +85,7 @@ def apiRequest(url, streamType, run_download_animation):
         else:
             if response.status_code == requests.codes.ok:
                 requestIncomplete = False
-            else :
+            else:
                 enable_loading_animation = False
                 sys.stdout.write('\r')
                 print(Fore.RED + "Bad response code recevied")
@@ -98,46 +98,49 @@ def apiRequest(url, streamType, run_download_animation):
                 if run_download_animation:
                     enable_loading_animation = True
 
-# Getting media package from shared media device 
-print("Step 1 of 3: Downloading shared media...")
-apiRequest("https://svc1.reveldigital.com/v2/package/get/" + media_reference_device_reg_key + "?tar=true", True, True)
-with open("MediaPackage.tar", 'wb') as f:
-    for chunk in response.iter_content(chunk_size=1024 * 1024):
-        f.write(chunk)
-f.close()
-response.close()
-enable_loading_animation = False
-sys.stdout.write('\r             Media download complete')
-print("")
-print("")
+if path.exists("Media.tar"):
+    print("Media package already exists. Skipping steps 1 and 2")
+else:
+    # Getting media package from shared media device 
+    print("Step 1 of 3: Downloading shared media...")
+    apiRequest("https://svc1.reveldigital.com/v2/package/get/" + media_reference_device_reg_key + "?tar=true", True, True)
+    with open("MediaPackage.tar", 'wb') as f:
+        for chunk in response.iter_content(chunk_size=1024 * 1024):
+            f.write(chunk)
+    f.close()
+    response.close()
+    enable_loading_animation = False
+    sys.stdout.write('\r             Media download complete')
+    print("")
+    print("")
 
-#Extracting Media folder from tar package
-print("Step 2 of 3: Creating Media.tar file")
-if path.exists("MediaPackage.tar"):
-    tar = tarfile.open("MediaPackage.tar", 'r')
-    for entry in tar:
-        if entry.name.startswith("Media/"):
-            tar.extract(entry)
-    tar.close()
-else:    
-    print(Fore.RED + "Something went wrong.")
-    print("MediaPackage.tart not found")
-    print("Close script and try again or contact support." + Fore.RESET)
-    close = input("Press enter to exit script")
-    sys.exit()
+    #Extracting Media folder from tar package
+    print("Step 2 of 3: Creating Media.tar file")
+    if path.exists("MediaPackage.tar"):
+        tar = tarfile.open("MediaPackage.tar", 'r')
+        for entry in tar:
+            if entry.name.startswith("Media/"):
+                tar.extract(entry)
+        tar.close()
+    else:    
+        print(Fore.RED + "Something went wrong.")
+        print("MediaPackage.tart not found")
+        print("Close script and try again or contact support." + Fore.RESET)
+        close = input("Press enter to exit script")
+        sys.exit()
 
-# Creating Media.tar file
-with tarfile.open('Media.tar', "a", format=tarfile.GNU_FORMAT) as archive:
-    archive.add('./Media')
-archive.close()
-print("             Media.tar file created")
-print("")
+    # Creating Media.tar file
+    with tarfile.open('Media.tar', "a", format=tarfile.GNU_FORMAT) as archive:
+        archive.add('./Media')
+    archive.close()
+    print("             Media.tar file created")
+    print("")
 
-# remove unneeded files/directories
-if path.exists("MediaPackage.tar"):
-    os.remove("MediaPackage.tar")
-if path.isdir('Media'):
-    shutil.rmtree('./Media')
+    # remove unneeded files/directories
+    if path.exists("MediaPackage.tar"):
+        os.remove("MediaPackage.tar")
+    if path.isdir('Media'):
+        shutil.rmtree('./Media')
 
 # create or load data from local JSON device list
 if path.exists("DeviceList.txt"):
@@ -155,7 +158,6 @@ else:
     enable_loading_animation = False
     with open('DeviceList.txt', 'w') as outfile:
         json.dump(original_devicesJSON, outfile)
-    print("")
     sys.stdout.write('\r             Device list created')
     print("")
     print("")
