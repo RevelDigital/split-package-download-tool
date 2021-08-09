@@ -11,8 +11,21 @@ from colorama import Fore, Back, Style, init
 import requests
 init()
 
-api_key = ""
-media_reference_device_reg_key = ""
+api_key = os.environ.get('REVEL_SPLIT_PACKAGE_API_KEY')
+if api_key is None:
+    print(Fore.RED + "API Key environmental variable not found.")
+    print("Please create a new variable using key name: 'REVEL_SPLIT_PACKAGE_API_KEY'")
+    print("Close script and try again or contact support." + Fore.RESET)
+    close = input("Press enter to exit script")
+    sys.exit()
+media_reference_device_reg_key = os.environ.get('REVEL_SPLIT_PACKAGE_REG_KEY')
+if media_reference_device_reg_key is None:
+    print(Fore.RED + "Media reference device registration key environmental variable not found.")
+    print("Please create a new variable using key name: 'REVEL_SPLIT_PACKAGE_REG_KEY'")
+    print("Close script and try again or contact support." + Fore.RESET)
+    close = input("Press enter to exit script")
+    sys.exit()
+
 polling_interval = 60
 retry_interval = 30
 original_devicesJSON = {}

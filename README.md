@@ -14,13 +14,11 @@ pip install colorama
 Note: Place the Python script file 'DeviceRegistrationMonitoringTool.py' within an empty folder before running it. All files will be added to that directory. 
 
 ## Usage
-A designated device should be registered in Revel that the script can reference to download the correct media files. Before running the script confirm that the correct content has been scheduled to your designated media reference device. If new content is scheduled to the media reference device, you will need to restart the script in order for the new content to be downloaded. Before running the script, open it in some text editor and include the API key for your Revel Digital account. Insert API key within the set of double quotes following the api_key variable near the top of the script. You can find your [API key](https://as1.reveldigital.com/account/api) by clicking the user icon in the top right corner of the CMS portal. Navigate to 'Account Information' > 'Developer API', and choose GENERATE NEW API KEY
-
-The registration key of the designated media reference device must be included as well. Use media_reference_device_reg_key to store the key as listed below
+A designated device should be registered in Revel that the script can reference to download the correct media files. Before running the script confirm that the correct content has been scheduled to your designated media reference device. If new content is scheduled to the media reference device, you will need to restart the script in order for the new content to be downloaded. Before running the script, a Revel account API key must be provided. You can find your [API key](https://as1.reveldigital.com/account/api) by clicking the user icon in the top right corner of the CMS portal. Navigate to 'Account Information' > 'Developer API', and choose GENERATE NEW API KEY. The registration key of the designated media reference device must be included as well. The values can be added as environmental variables using the following key names for API key and registration key respectively
 
 ```
-api_key = ""
-media_reference_device_reg_key = ""
+REVEL_SPLIT_PACKAGE_API_KEY
+REVEL_SPLIT_PACKAGE_REG_KEY
 ```
 
 Save the changes and then run the script. This script includes animations. For best performance run the script using command prompt.
