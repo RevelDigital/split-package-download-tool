@@ -132,7 +132,7 @@ else:
     media_reference_device_reg_key = groupDevicesJSON[0]["registration_key"]
     print("Downloading shared media...")
     # Getting media package from shared media device
-    apiRequest("https://svc1.reveldigital.com/v2/package/get/" + media_reference_device_reg_key + "?tar=true", True, True)
+    apiRequest("https://svc1.reveldigital.com/v2/package/get/" + media_reference_device_reg_key + "?usb=true&tar=true", True, True)
     with open("MediaPackage.tar", 'wb') as f:
         for chunk in response.iter_content(chunk_size=1024 * 1024):
             f.write(chunk)
@@ -213,7 +213,7 @@ while True:
                 if matchFound == False:
                     newDeviceCount += 1
                     print(Fore.GREEN + "New Device Found: " + device["name"] + ". Downloading package now..." + Fore.RESET)
-                    apiRequest("https://svc1.reveldigital.com/v2/package/get/" + device["registration_key"] + "?tar=true&excludeMedia=true", True, True)
+                    apiRequest("https://svc1.reveldigital.com/v2/package/get/" + device["registration_key"] + "?usb=true&tar=true&excludeMedia=true", True, True)
                     with open(device["registration_key"] + ".tar", 'wb') as f:
                         f.write(response.raw.read())
                     response.close()
