@@ -30,6 +30,6 @@ REVEL_SPLIT_PACKAGE_REG_KEY
 
 Save the changes and then run the script. This script includes animations. For best performance run the script using command prompt.
 
-Once the script is running it shouldn't require any user input. The script will check if the media package has already been created, and if it hasn't, it will create a Media.tar file containing the media scheduled to the designated media reference device. The script will only check for new devices with the Universal device type. Before closing the script, make sure a download isn't in progress. Before copying a package to a USB drive, confirm that it isn't still downloading.
+Once the script is running it shouldn't require any user input. The script will check if the media package has already been created, and if it hasn't, it will create a Media.tar file containing the media scheduled to the designated media reference device. Before closing the script, make sure a download isn't in progress. Before copying a package to a USB drive, confirm that it isn't still downloading.
 
 The script also generates a DeviceList.txt file which allows the script to detect new devices that are registered when the script is not running. For this functionality to work correctly, the file should not be removed or deleted. This functionality will only be available starting on the second time the script runs.

@@ -205,22 +205,21 @@ while True:
         with open('DeviceList.txt') as json_file:
             original_devicesJSON = json.load(json_file)
         for device in devicesJSON:
-            if(device["device_type"]["id"] == "Universal"):
-                matchFound = False
-                for originalDevice in original_devicesJSON:
-                    if device["registration_key"] == originalDevice["registration_key"]:
-                        matchFound = True
-                if matchFound == False:
-                    newDeviceCount += 1
-                    print(Fore.GREEN + "New Device Found: " + device["name"] + ". Downloading package now..." + Fore.RESET)
-                    apiRequest("https://svc1.reveldigital.com/v2/package/get/" + device["registration_key"] + "?usb=true&tar=true&excludeMedia=true", True, True)
-                    with open(device["registration_key"] + ".tar", 'wb') as f:
-                        f.write(response.raw.read())
-                    response.close()
-                    enable_loading_animation = False
-                    sys.stdout.write('\rDownload complete')
-                    print("")
-                    print("")
+            matchFound = False
+            for originalDevice in original_devicesJSON:
+                if device["registration_key"] == originalDevice["registration_key"]:
+                    matchFound = True
+            if matchFound == False:
+                newDeviceCount += 1
+                print(Fore.GREEN + "New Device Found: " + device["name"] + ". Downloading package now..." + Fore.RESET)
+                apiRequest("https://svc1.reveldigital.com/v2/package/get/" + device["registration_key"] + "?usb=true&tar=true&excludeMedia=true", True, True)
+                with open(device["registration_key"] + ".tar", 'wb') as f:
+                    f.write(response.raw.read())
+                response.close()
+                enable_loading_animation = False
+                sys.stdout.write('\rDownload complete')
+                print("")
+                print("")
         original_devicesJSON = devicesJSON
         with open('DeviceList.txt', 'w') as outfile:
             json.dump(original_devicesJSON, outfile)
