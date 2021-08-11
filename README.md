@@ -34,4 +34,4 @@ Once the script is running it shouldn't require any user input. The script will 
 
 The script also generates a DeviceList.txt file which allows the script to detect new devices that are registered when the script is not running. For this functionality to work correctly, the file should not be removed or deleted. This functionality will only be available starting on the second time the script runs.
 
-The SplitPackageGroupBatchDownload script provides an option of merging the Media package with all downloaded device packages.
+The **SplitPackageGroupBatchDownload** script provides an option of merging the Media package with all downloaded device packages.
