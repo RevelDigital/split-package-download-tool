@@ -153,7 +153,7 @@ else:
         tar.close()
     else:    
         print(Fore.RED + "Something went wrong.")
-        print("MediaPackage.tar not found")
+        print("MediaPackage.tart not found")
         print("Close script and try again or contact support." + Fore.RESET)
         close = input("Press enter to exit script")
         sys.exit()
@@ -171,63 +171,52 @@ else:
     if path.isdir('Media'):
         shutil.rmtree('./Media')
 
-# create or load data from local JSON device list
-if path.exists("DeviceList.txt"):
-    print("Step 3 of 3: Local device list found. Loading devices from list")
-    with open('DeviceList.txt') as json_file:
-        original_devicesJSON = json.load(json_file)
-    print("             Device list loaded")
-    print("")
-    print("Checking in " + str(polling_interval) + " seconds for new devices registered since script was last closed")
-else:
-    print("Step 3 of 3: Local device list doesn't exist. Generating list device list now...")
-    apiRequest("https://api.reveldigital.com/api/devices?api_key=" + api_key + "&include_snap=false", False, True)
-    original_devicesJSON = response.json()
+#automatically download the device specific package.tar for each device in account
+print("")
+print("Getting new devices now...")
+apiRequest("https://api.reveldigital.com/api/devices?api_key=" + api_key + "&group_id=" + group_id + "&include_snap=false", False, False)
+devicesJSON = response.json()
+response.close()
+newDeviceCount = 0
+for device in devicesJSON:
+    newDeviceCount += 1
+    print(Fore.GREEN + "Device Found: " + device["name"] + ". Downloading package now..." + Fore.RESET)
+    apiRequest("https://svc1.reveldigital.com/v2/package/get/" + device["registration_key"] + "?usb=true&tar=true&excludeMedia=true", True, True)
+    with open(device["registration_key"] + ".tar", 'wb') as f:
+        f.write(response.raw.read())
     response.close()
     enable_loading_animation = False
-    with open('DeviceList.txt', 'w') as outfile:
-        json.dump(original_devicesJSON, outfile)
-    sys.stdout.write('\r             Device list created')
+    sys.stdout.write('\rDownload complete')
     print("")
     print("")
-    print("Checking for new devices in " + str(polling_interval) + " seconds")
+print("Check complete. " + str(newDeviceCount)+ " new Device(s) found")
 
-#Monitor for new device registrations and automatically download the device specific package.tar
-while True:
-    timerAnimation(polling_interval)
-    print("")
-    print("Checking for new devices now...")
-    apiRequest("https://api.reveldigital.com/api/devices?api_key=" + api_key + "&include_snap=false", False, False)
-    devicesJSON = response.json()
-    response.close()
-    newDeviceCount = 0
-    if path.exists("DeviceList.txt"):
-        with open('DeviceList.txt') as json_file:
-            original_devicesJSON = json.load(json_file)
-        for device in devicesJSON:
-            matchFound = False
-            for originalDevice in original_devicesJSON:
-                if device["registration_key"] == originalDevice["registration_key"]:
-                    matchFound = True
-            if matchFound == False:
-                newDeviceCount += 1
-                print(Fore.GREEN + "New Device Found: " + device["name"] + ". Downloading package now..." + Fore.RESET)
-                apiRequest("https://svc1.reveldigital.com/v2/package/get/" + device["registration_key"] + "?usb=true&tar=true&excludeMedia=true", True, True)
-                with open(device["registration_key"] + ".tar", 'wb') as f:
-                    f.write(response.raw.read())
-                response.close()
-                enable_loading_animation = False
-                sys.stdout.write('\rDownload complete')
-                print("")
-                print("")
-        original_devicesJSON = devicesJSON
-        with open('DeviceList.txt', 'w') as outfile:
-            json.dump(original_devicesJSON, outfile)
-        print("Check complete. " + str(newDeviceCount)+ " new Device(s) found")
-        print("Checking again in " + str(polling_interval) + " seconds")
-    else:
+rehydrate = input("Would you like to merge the Media content with downloaded device packages? (y/n)")
+if rehydrate == "y":
+    if path.exists("Media.tar"):
+        tar = tarfile.open("Media.tar", 'r')
+        tar.extractall()
+        tar.close()
+    else:    
         print(Fore.RED + "Something went wrong.")
-        print("DeviceList.txt not found")
+        print("Media.tar not found")
         print("Close script and try again or contact support." + Fore.RESET)
         close = input("Press enter to exit script")
         sys.exit()
+    for device in devicesJSON:
+        tar_name = device["registration_key"] + ".tar"
+        if path.exists(tar_name):
+            print("Merging device package: " + device["name"])
+            with tarfile.open(tar_name, "a", format=tarfile.GNU_FORMAT) as archive:
+                archive.add('./Media')
+            archive.close()
+        else:
+            print(Fore.RED + "Something went wrong.")
+            print(tar_name + " not found")
+            print("package skipped" + Fore.RESET)
+    print("package merge complete")
+    if path.isdir('Media'):
+        shutil.rmtree('./Media')
+
+while True:
+    time.sleep(60)

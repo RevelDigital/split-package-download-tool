@@ -137,7 +137,7 @@ else:
         tar.close()
     else:    
         print(Fore.RED + "Something went wrong.")
-        print("MediaPackage.tart not found")
+        print("MediaPackage.tar not found")
         print("Close script and try again or contact support." + Fore.RESET)
         close = input("Press enter to exit script")
         sys.exit()

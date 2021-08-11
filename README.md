@@ -1,5 +1,5 @@
 # split-package-download-tool
-This project consists of two scripts, SplitPackageDownloadByGroup.py, and SplitPackageDownloadByRegKey.py. Both scripts continuously monitor a Revel Digital account for new devices. When a new device is registered, the respective tar package is downloaded, excluding the media content. Each script has a unique way of selecting the media reference device.
+This project consists of three scripts. SplitPackageDownloadByGroup.py and SplitPackageDownloadByRegKey.py both continuously monitor a Revel Digital account for new devices. When a new device is registered, the respective tar package is downloaded, excluding the media content. Each script has a unique way of selecting the media reference device. SplitPackageGroupBatchDownload.py downloads all deivce packages in a specific device group.
 
 ## Installation
 
@@ -20,7 +20,7 @@ Before running the script, a Revel account API key must be provided. You can fin
 ```
 REVEL_SPLIT_PACKAGE_API_KEY
 ```
-The **SplitPackageDownloadByGroup** script provides a list of all device groups from the account. Once a group is selected, the first device in that group becomes the media reference device.
+The **SplitPackageDownloadByGroup** and **SplitPackageGroupBatchDownload** scripts provides a list of all device groups from the account. Once a group is selected, the first device in that group becomes the media reference device.
 
 However, when running the **SplitPackageDownloadByRegKey** script, the registration key of the designated media reference device must be provided. The registration key can be added as environmental variable using the following key name. 
 
@@ -33,3 +33,5 @@ Save the changes and then run the script. This script includes animations. For b
 Once the script is running it shouldn't require any user input. The script will check if the media package has already been created, and if it hasn't, it will create a Media.tar file containing the media scheduled to the designated media reference device. Before closing the script, make sure a download isn't in progress. Before copying a package to a USB drive, confirm that it isn't still downloading.
 
 The script also generates a DeviceList.txt file which allows the script to detect new devices that are registered when the script is not running. For this functionality to work correctly, the file should not be removed or deleted. This functionality will only be available starting on the second time the script runs.
+
+The SplitPackageGroupBatchDownload script provides an option of merging the Media package with all downloaded device packages.
