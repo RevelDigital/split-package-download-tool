@@ -116,8 +116,12 @@ def get_group_id():
     if device_group_index > -1 and device_group_index < len(deviceGroupsJSON):
         device_group_name = deviceGroupsJSON[device_group_index]["name"]
         print("Group Selected: " + device_group_name)
-        device_group_id = deviceGroupsJSON[device_group_index]["id"]
-        return device_group_id
+        if deviceGroupsJSON[device_group_index]["count"] == 0:
+            print("Device group doesn't contain any devices. Please select another group")
+            return get_group_id()
+        else:
+            device_group_id = deviceGroupsJSON[device_group_index]["id"]
+            return device_group_id
     else:
         print("Invalid entry")
         return get_group_id()
