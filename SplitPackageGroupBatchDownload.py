@@ -7,6 +7,7 @@ import sys
 import tarfile
 import threading
 import time
+import zipfile
 from colorama import Fore, Back, Style, init
 import requests
 init()
@@ -122,11 +123,23 @@ def get_group_id():
         print("Invalid entry")
         return get_group_id()
 
-if path.exists("Media.tar"):
-    print("Media package already exists. Skipping steps 1 and 2")
+if path.exists("Media.tar") and path.exists("GroupId.txt"):
+    print("Media package already exists. Loading device group from file. Skipping steps 1 and 2")
+    with open('GroupId.txt') as text_file:
+        group_id = text_file.read()
 else:
-    print("Step 1 of 3: No Media package found. Select device group to pull media from")
+    print("Missing Media.tar and/or GroupId.txt files. Select device group to pull media from")
+    if path.exists("MediaPackage.tar"):
+        os.remove("MediaPackage.tar")
+    if path.exists("Media.tar"):
+        os.remove("Media.tar")
+    if path.exists("GroupId.txt"):
+        os.remove("GroupId.txt")
+    if path.isdir('Media'):
+        shutil.rmtree('./Media')
     group_id = get_group_id()
+    with open('GroupId.txt', 'w') as outfile:
+        outfile.write(group_id)
     apiRequest("https://api.reveldigital.com/api/devices?api_key=" + api_key + "&group_id=" + group_id + "&include_snap=false", False, False)
     groupDevicesJSON = response.json()
     media_reference_device_reg_key = groupDevicesJSON[0]["registration_key"]
@@ -217,6 +230,26 @@ if rehydrate == "y":
     print("package merge complete")
     if path.isdir('Media'):
         shutil.rmtree('./Media')
+
+convert = input("Would you like to convert the tar package files to zip file for Android? (y/n)")
+if convert == "y":
+    for device in devicesJSON:
+        print("Compressing device package: " + device["name"])
+        registration_key = device["registration_key"]
+        tar = tarfile.open(registration_key + ".tar", 'r')
+        zipPackage = zipfile.ZipFile(registration_key + ".zip", 'a', zipfile.ZIP_DEFLATED)
+        for entry in tar:
+            entryName = entry.name
+            file = tar.extractfile(entry)
+            if file is not None:
+                entryFile = file.read()
+                zipPackage.writestr(entryName, entryFile)
+        tar.close()
+        zipPackage.close()
+        
+        if path.exists(registration_key + ".tar"):
+            os.remove(registration_key+ ".tar")
+    print("package conversion complete")
 
 while True:
     time.sleep(60)

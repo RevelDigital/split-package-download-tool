@@ -20,7 +20,7 @@ Before running the script, a Revel account API key must be provided. You can fin
 ```
 REVEL_SPLIT_PACKAGE_API_KEY
 ```
-The **SplitPackageDownloadByGroup** and **SplitPackageGroupBatchDownload** scripts provides a list of all device groups from the account. Once a group is selected, the first device in that group becomes the media reference device.
+The **SplitPackageDownloadByGroup** and **SplitPackageGroupBatchDownload** scripts provides a list of all device groups from the account. Once a group is selected, the first device in that group becomes the media reference device. The group selection is saved and referenced the next time the script is ran. To select a new device group, close the script, remove the Media.tar and/or GroupId.txt from your directory, and start the script again.
 
 However, when running the **SplitPackageDownloadByRegKey** script, the registration key of the designated media reference device must be provided. The registration key can be added as environmental variable using the following key name. 
 
@@ -34,4 +34,4 @@ Once the script is running it shouldn't require any user input. The script will 
 
 The script also generates a DeviceList.txt file which allows the script to detect new devices that are registered when the script is not running. For this functionality to work correctly, the file should not be removed or deleted. This functionality will only be available starting on the second time the script runs.
 
-The **SplitPackageGroupBatchDownload** script provides an option of merging the Media package with all downloaded device packages.
+The **SplitPackageGroupBatchDownload** script provides an option of merging the Media package with all downloaded device packages, and can optionally convert the tar packages to zip file for updating Android devices.
