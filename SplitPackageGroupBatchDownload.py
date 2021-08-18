@@ -254,6 +254,3 @@ if convert == "y":
         if path.exists(registration_key + ".tar"):
             os.remove(registration_key+ ".tar")
     print("package conversion complete")
-
-while True:
-    time.sleep(60)
