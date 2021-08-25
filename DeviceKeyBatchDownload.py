@@ -6,7 +6,6 @@ from colorama import Fore, Back, Style, init
 init()
 
 retry_interval = 30
-target_string = "evo"
 api_key = os.environ.get('REVEL_SPLIT_PACKAGE_API_KEY')
 
 if api_key is None:
@@ -48,26 +47,48 @@ def apiRequest(url):
                 print("Retrying in " + str(retry_interval) + " seconds")
                 timerAnimation(retry_interval)
                 print("\nRetrying now")
-                
+
+print("Please provide keyword(s) to filter devices by.")
+print("If the keyword(s) are found within a device name, the respective device.key file will be created.")
+print("If more than one word is provided the entire text string will be matched exactly as it appears.")
+target_string = input("Please enter text...")
+target_string = target_string.strip()
+print("Keyword text: " + target_string)
 print("gettting device data...")
 response = apiRequest("https://api.reveldigital.com/api/devices/?api_key=" + api_key + "&include_snap=false")
 devicesJSON = response.json()
 response.close()
-print("creating device.key files for the following devices:")
+matchFound =False
 for device in devicesJSON:
-    deviceName = device["name"]
+    deviceName = device["name"].strip()
     if target_string.lower() in deviceName.lower():
+        if not matchFound:
+            print("creating device.key files for the following devices:")
+            matchFound = True
         if os.path.isdir(deviceName):
             print("")
-            print(Fore.RED + "device.key already created for another device with matching name")
+            print(Fore.YELLOW + "device folder already created for another device with matching name")
             print("Skipping device name: " + deviceName)
             print("Registration Key:" + device["registration_key"] + Fore.RESET)
             print("")
         else:
-            os.mkdir(deviceName)
-            path = os.path.join('./' + deviceName, "device.key")
-            deviceKey = open(path, "w")
-            deviceKey.write(device["encrypted_registration_key"])
-            deviceKey.close()
-            print(deviceName)
-print(Fore.GREEN + "device.key creation complete" + Fore.RESET)
+            try:
+                os.mkdir(deviceName)
+            except OSError as e:
+                print("")
+                print(Fore.RED + "directory could not be created for device name: " + deviceName)
+                print("Registration Key:" + device["registration_key"])
+                print("If the device name includes an invalid character or character sequence, the OS won't allow a folder to be created with that device name.")
+                print("error: " + str(e) + Fore.RESET)
+                print("")
+            if os.path.isdir(deviceName):
+                path = os.path.join('./' + deviceName, "device.key")
+                deviceKey = open(path, "w")
+                deviceKey.write(device["encrypted_registration_key"])
+                deviceKey.close()
+                print(deviceName)
+
+if matchFound:
+    print(Fore.GREEN + "device.key creation complete" + Fore.RESET)    
+else:
+    print(Fore.RED + "No device name in the account contains text that matches the provided keyword(s): " + target_string + Fore.RESET)

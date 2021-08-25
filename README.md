@@ -36,10 +36,4 @@ The script also generates a DeviceList.txt file which allows the script to detec
 
 The **SplitPackageGroupBatchDownload** script provides an option of merging the Media package with all downloaded device packages, and can optionally convert the tar packages to zip file for updating Android devices.
 
-The **DeviceKeyBatchDownload.py** script will save the encrypted registration key to a device.key file for each device where the device name contains a target string (case-insensitive). The target string can be modified in script.
-
-```
-target_string = "evo"
-```
-
- A folder is created in the current directory to store each device.key file and named using the respective device name. The device.key download will be skipped if a folder with a matching device name already exists in the directory.
+The **DeviceKeyBatchDownload.py** script will save the encrypted registration key to a device.key file for each device where the device name contains a target string (case-insensitive). The target string can be provided when prompted in the console. A folder is created in the current directory to store each device.key file and named using the respective device name. The device.key download will be skipped if a folder with a matching device name already exists in the directory, or if the device name contains illegal characters that can't be used as a folder name.
