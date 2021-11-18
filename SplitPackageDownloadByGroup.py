@@ -21,7 +21,7 @@ if api_key is None:
     sys.exit()
 polling_interval = 60
 retry_interval = 30
-request_timeout = 30
+request_timeout = 120
 original_devicesJSON = {}
 
 def loadingAnimation():

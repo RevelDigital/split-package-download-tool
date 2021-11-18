@@ -6,7 +6,7 @@ from colorama import Fore, Back, Style, init
 init()
 
 retry_interval = 30
-request_timeout = 30
+request_timeout = 120
 api_key = os.environ.get('REVEL_SPLIT_PACKAGE_API_KEY')
 
 if api_key is None:

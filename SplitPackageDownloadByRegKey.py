@@ -29,7 +29,7 @@ if media_reference_device_reg_key is None:
 
 polling_interval = 60
 retry_interval = 30
-request_timeout = 30
+request_timeout = 120
 original_devicesJSON = {}
 
 def loadingAnimation():
