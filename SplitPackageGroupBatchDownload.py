@@ -15,6 +15,7 @@ init()
 retry_interval = 15
 max_retry_attempts = 5
 enable_retry_limit = False
+request_timeout = 30
 
 api_key = os.environ.get('REVEL_SPLIT_PACKAGE_API_KEY')
 if api_key is None:
@@ -49,12 +50,13 @@ def timerAnimation(duration):
 def apiRequest(url, streamType, run_download_animation):
     global enable_loading_animation
     global enable_retry_limit
+    global request_timeout
     retry_count = 0
     enable_loading_animation = run_download_animation
     while enable_retry_limit == False or (enable_retry_limit == True and retry_count < max_retry_attempts):
         try:
-            response = requests.get(url, stream=streamType)
-        except requests.exceptions.RequestException as e:
+            response = requests.get(url, stream=streamType, timeout=request_timeout)
+        except (requests.exceptions.RequestException, requests.exceptions.Timeout) as e:
             enable_loading_animation = False
             sys.stdout.write('\r')
             print(Fore.RED + "Connection Error")

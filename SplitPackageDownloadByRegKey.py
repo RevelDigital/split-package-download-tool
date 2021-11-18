@@ -9,6 +9,7 @@ import threading
 import time
 from colorama import Fore, Back, Style, init
 import requests
+from requests.api import request
 init()
 
 api_key = os.environ.get('REVEL_SPLIT_PACKAGE_API_KEY')
@@ -28,6 +29,7 @@ if media_reference_device_reg_key is None:
 
 polling_interval = 60
 retry_interval = 30
+request_timeout = 30
 original_devicesJSON = {}
 
 def loadingAnimation():
@@ -78,13 +80,14 @@ while not_connected:
 def apiRequest(url, streamType, run_download_animation):
     global response
     global enable_loading_animation
+    global request_timeout
     requestIncomplete = True
     if run_download_animation:
         enable_loading_animation = True
     while requestIncomplete:
         try:
-            response = requests.get(url, stream=streamType)
-        except requests.exceptions.RequestException as e:
+            response = requests.get(url, stream=streamType, timeout=request_timeout)
+        except (requests.exceptions.RequestException, requests.exceptions.Timeout) as e:
             enable_loading_animation = False
             sys.stdout.write('\r')
             print(Fore.RED + "Connection Error")

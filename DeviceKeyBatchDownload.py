@@ -6,6 +6,7 @@ from colorama import Fore, Back, Style, init
 init()
 
 retry_interval = 30
+request_timeout = 30
 api_key = os.environ.get('REVEL_SPLIT_PACKAGE_API_KEY')
 
 if api_key is None:
@@ -24,11 +25,12 @@ def timerAnimation(duration):
     print("")
 
 def apiRequest(url):
+    global request_timeout
     requestIncomplete = True
     while requestIncomplete:
         try:
-            response = requests.get(url)
-        except requests.exceptions.RequestException as e:
+            response = requests.get(url, timeout=request_timeout)
+        except (requests.exceptions.RequestException, requests.exceptions.Timeout) as e:
             sys.stdout.write('\r')
             print(Fore.RED + "Connection Error")
             print("Error: " + str(e) + Fore.RESET)
